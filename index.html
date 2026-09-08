@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruffles - Virtual Betta Companion</title>
+    <style>
+        :root {
+            --bg-color: #0b0c1b;
+            --tank-bg: linear-gradient(180deg, #0f122c 0%, #17183d 50%, #201335 100%);
+            --accent-blue: #3a86ff;
+            --accent-purple: #8338ec;
+            --accent-pink: #ff007f;
+            --text-color: #f0f3ff;
+            --panel-bg: rgba(22, 23, 49, 0.85);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            background: var(--panel-bg);
+            border-radius: 28px;
+            padding: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(131, 56, 236, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+        }
+
+        header {
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            letter-spacing: 2px;
+            background: linear-gradient(45deg, var(--accent-blue), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+
+        header p {
+            font-size: 0.85rem;
+            color: #a0a5c3;
+        }
+
+        /* Fish Tank Styling */
+        .tank-wrapper {
+            position: relative;
+            width: 100%;
+            height: 260px;
+            background: var(--tank-bg);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid rgba(131, 56, 236, 0.4);
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(58, 134, 255, 0.3);
+        }
+
+        /* Ambient Lighting overlay */
+        .tank-light {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background: radial-gradient(circle at 50% 0%, rgba(58, 134, 255, 0.25), transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Bubbles */
+        .bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            bottom: -20px;
+            animation: rise 6s infinite ease-in;
+            pointer-events: none;
+        }
+
+        @keyframes rise {
+            0% { transform: translateY(0) scale(0.8); opacity: 0; }
+            20% { opacity: 0.6; }
+            100% { transform: translateY(-300px) scale(1.2); opacity: 0; }
+        }
+
+        /* Betta Fish SVG & Movement */
+        .fish-container {
+            position: absolute;
+            width: 130px;
+            height: 90px;
+            left: 35%;
+            top: 35%;
+            transition: all 1.2s ease-in-out;
+            cursor: pointer;
+            filter: drop-shadow(0 5px 12px rgba(0,0,0,0.5));
+        }
+
+        .fish-svg {
+            width: 100%;
+            height: 100%;
+            transform-origin: center center;
+            animation: swim 3s infinite ease-in-out alternate;
+        }
+
+        @keyframes swim {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(2deg); }
+            100% { transform: translateY(5px) rotate(-2deg); }
+        }
+
+        .sleeping .fish-svg {
+            animation: sleepSwim 5s infinite ease-in-out alternate;
+            filter: brightness(0.6);
+        }
+
+        @keyframes sleepSwim {
+            0% { transform: translateY(0px) rotate(-10deg); }
+            100% { transform: translateY(3px) rotate(-5deg); }
+        }
+
+        /* Message Bubble Overlay */
+        .speech-bubble {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            background: rgba(15, 16, 35, 0.92);
+            border: 1px solid var(--accent-purple);
+            color: #ffffff;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 0.88rem;
+            line-height: 1.4;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .speech-bubble.active {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-5px);
+            pointer-events: auto;
+        }
+
+        /* Stat Bars */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.04);
+            padding: 10px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            margin-bottom: 6px;
+            color: #b0b5d0;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 80%;
+            border-radius: 4px;
+            transition: width 0.4s ease, background-color 0.4s ease;
+        }
+
+        #fill-hunger { background: linear-gradient(90deg, #ff9f1c, #ffbf69); }
+        #fill-happiness { background: linear-gradient(90deg, #2ec4b6, #cbf3f0); }
+        #fill-energy { background: linear-gradient(90deg, #3a86ff, #00f5d4); }
+        #fill-missing { background: linear-gradient(90deg, #8338ec, #ff007f); }
+
+        /* Actions Grid */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .action-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 12px 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: rgba(131, 56, 236, 0.2);
+            border-color: var(--accent-purple);
+            transform: translateY(-2px);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        .action-btn.love-btn {
+            background: linear-gradient(135deg, rgba(131, 56, 236, 0.3), rgba(255, 0, 127, 0.3));
+            border-color: rgba(255, 0, 127, 0.5);
+            grid-column: span 4;
+            flex-direction: row;
+            justify-content: center;
+            padding: 14px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            box-shadow: 0 0 12px rgba(255, 0, 127, 0.2);
+        }
+
+        .action-btn.love-btn:hover {
+            box-shadow: 0 0 20px rgba(255, 0, 127, 0.4);
+            background: linear-gradient(135deg, rgba(131, 56, 236, 0.5), rgba(255, 0, 127, 0.5));
+        }
+
+        .btn-icon {
+            font-size: 1.4rem;
+        }
+
+        .btn-label {
+            font-size: 0.72rem;
+            color: #d0d5f0;
+        }
+
+        /* Plant Decor */
+        .plant {
+            position: absolute;
+            bottom: -5px;
+            fill: #193852;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        .plant-left { left: -10px; width: 60px; }
+        .plant-right { right: -10px; width: 70px; transform: scaleX(-1); }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Ruffles 🐠</h1>
+            <p>Your Virtual Betta Companion</p>
+        </header>
+
+        <!-- Fish Tank Container -->
+        <div class="tank-wrapper" id="tank">
+            <div class="tank-light"></div>
+
+            <!-- Plants -->
+            <svg class="plant plant-left" viewBox="0 0 100 100">
+                <path d="M20,100 Q40,60 20,20 Q50,50 30,100 Z" fill="#2d1b4e"/>
+                <path d="M10,100 Q30,40 40,10 Q30,60 50,100 Z" fill="#1d265a"/>
+            </svg>
+            <svg class="plant plant-right" viewBox="0 0 100 100">
+                <path d="M20,100 Q40,60 20,20 Q50,50 30,100 Z" fill="#3b1c5a"/>
+                <path d="M10,100 Q30,40 40,10 Q30,60 50,100 Z" fill="#1f336e"/>
+            </svg>
+
+            <!-- Bubbles Container -->
+            <div id="bubbles-container"></div>
+
+            <!-- Ruffles SVG Pet -->
+            <div class="fish-container" id="fish" onclick="tapFish()">
+                <svg class="fish-svg" viewBox="0 0 200 140" id="fish-svg">
+                    <defs>
+                        <!-- Dark Blue to Deep Purple Body Gradient -->
+                        <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#121858" />
+                            <stop offset="50%" stop-color="#2a1b6e" />
+                            <stop offset="100%" stop-color="#511878" />
+                        </linearGradient>
+                        
+                        <!-- Flowing Fin Gradient -->
+                        <linearGradient id="finGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#3a86ff" stop-opacity="0.9"/>
+                            <stop offset="40%" stop-color="#8338ec" stop-opacity="0.8"/>
+                            <stop offset="85%" stop-color="#ff007f" stop-opacity="0.7"/>
+                            <stop offset="100%" stop-color="#00f5d4" stop-opacity="0.5"/>
+                        </linearGradient>
+
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                            <feMerge>
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+
+                    <!-- Large Back Tail Fin -->
+                    <path d="M 60 70 C 20 10, 0 40, 5 70 C 0 100, 20 130, 60 70 Z" fill="url(#finGrad)" filter="url(#glow)"/>
+                    
+                    <!-- Top Dorsal Fin -->
+                    <path d="M 90 45 C 70 10, 30 15, 50 50 Z" fill="url(#finGrad)"/>
+                    
+                    <!-- Bottom Ventral Fin -->
+                    <path d="M 95 90 C 70 135, 40 120, 65 85 Z" fill="url(#finGrad)"/>
+
+                    <!-- Main Fish Body -->
+                    <path d="M 55 70 C 65 40, 120 40, 145 70 C 120 100, 65 100, 55 70 Z" fill="url(#bodyGrad)"/>
+                    
+                    <!-- Pectoral Side Fin -->
+                    <path d="M 100 75 C 85 90, 75 100, 90 105 C 95 95, 105 85, 100 75 Z" fill="url(#finGrad)"/>
+
+                    <!-- Fish Eye -->
+                    <circle cx="130" cy="63" r="5" fill="#ffffff"/>
+                    <circle cx="131" cy="63" r="3" fill="#0b0c1b"/>
+                    <circle cx="132" cy="62" r="1" fill="#ffffff"/>
+
+                    <!-- Gill detail -->
+                    <path d="M 118 60 Q 114 70 118 80" stroke="rgba(131, 56, 236, 0.5)" stroke-width="2" fill="none"/>
+                </svg>
+            </div>
+
+            <!-- Speech Bubble for Love Notes and Reactions -->
+            <div class="speech-bubble" id="dialogue">
+                Hey there! I'm Ruffles 💙
+            </div>
+        </div>
+
+        <!-- Stat Bars Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span>HUNGER</span>
+                    <span id="val-hunger">80%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="fill-hunger"></div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span>HAPPINESS</span>
+                    <span id="val-happiness">85%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="fill-happiness"></div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span>ENERGY</span>
+                    <span id="val-energy">90%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="fill-energy"></div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span>MISSING YOU</span>
+                    <span id="val-missing">15%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="fill-missing"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="actions-grid">
+            <button class="action-btn" onclick="feedPet()">
+                <span class="btn-icon">🍕</span>
+                <span class="btn-label">Feed</span>
+            </button>
+            <button class="action-btn" onclick="playPet()">
+                <span class="btn-icon">🎾</span>
+                <span class="btn-label">Play</span>
+            </button>
+            <button class="action-btn" onclick="sleepPet()">
+                <span class="btn-icon">💤</span>
+                <span class="btn-label">Rest</span>
+            </button>
+            <button class="action-btn" onclick="tapFish()">
+                <span class="btn-icon">✨</span>
+                <span class="btn-label">Pet</span>
+            </button>
+
+            <!-- Love Notes Button -->
+            <button class="action-btn love-btn" onclick="triggerLoveNote()">
+                <span class="btn-icon">❤️</span>
+                <span>Love Note from Him</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        let stats = {
+            hunger: 80,
+            happiness: 85,
+            energy: 90,
+            missing: 15
+        };
+
+        let isSleeping = false;
+
+        // Custom Messages List
+        const loveNotes = [
+            "Just a reminder that you are my twin flame ❤️",
+            "I am so proud of you and amazed by how perfect you are ✨",
+            "I am the luckiest man ever to be able to call you mine 👑",
+            "Listen: just because you are having a bad day doesn't mean I will ever leave you 💕",
+            "I really love you to the moon and back and beyond 🌙✨",
+            "I am yours and only yours, don't worry about others 🔒💖",
+            "Heyyyy look at you missing me, aren't you so cute? (I can see you smiling!) 😉",
+            "Just because I am not around doesn't mean you shouldn't take care of yourself, I am watching you! 👀💓"
+        ];
+
+        let messageIndex = 0;
+
+        // Initialize UI
+        function updateUI() {
+            document.getElementById('fill-hunger').style.width = stats.hunger + '%';
+            document.getElementById('val-hunger').innerText = Math.round(stats.hunger) + '%';
+
+            document.getElementById('fill-happiness').style.width = stats.happiness + '%';
+            document.getElementById('val-happiness').innerText = Math.round(stats.happiness) + '%';
+
+            document.getElementById('fill-energy').style.width = stats.energy + '%';
+            document.getElementById('val-energy').innerText = Math.round(stats.energy) + '%';
+
+            document.getElementById('fill-missing').style.width = stats.missing + '%';
+            document.getElementById('val-missing').innerText = Math.round(stats.missing) + '%';
+        }
+
+        // Show Dialogue Speech Bubble
+        let dialogueTimeout;
+        function showMessage(text) {
+            const dialogue = document.getElementById('dialogue');
+            dialogue.innerText = text;
+            dialogue.classList.add('active');
+
+            clearTimeout(dialogueTimeout);
+            dialogueTimeout = setTimeout(() => {
+                dialogue.classList.remove('active');
+            }, 6000);
+        }
+
+        // Action Handlers
+        function feedPet() {
+            if (isSleeping) wakeUp();
+            stats.hunger = Math.min(100, stats.hunger + 25);
+            stats.energy = Math.min(100, stats.energy + 5);
+            updateUI();
+            showMessage("Ruffles gobbled up the treat! 🍣 Nom nom!");
+            moveFishTo(40, 40);
+        }
+
+        function playPet() {
+            if (isSleeping) wakeUp();
+            if (stats.energy < 15) {
+                showMessage("Ruffles is too tired to play right now... 😴");
+                return;
+            }
+            stats.happiness = Math.min(100, stats.happiness + 25);
+            stats.energy = Math.max(0, stats.energy - 12);
+            stats.hunger = Math.max(0, stats.hunger - 10);
+            updateUI();
+            showMessage("Ruffles does a happy splashy loop-de-loop! 🌊✨");
+            moveFishTo(20 + Math.random() * 40, 20 + Math.random() * 30);
+        }
+
+        function sleepPet() {
+            isSleeping = !isSleeping;
+            const fish = document.getElementById('fish');
+            if (isSleeping) {
+                fish.classList.add('sleeping');
+                stats.energy = Math.min(100, stats.energy + 40);
+                updateUI();
+                showMessage("Ruffles is resting softly among the plants... 💤");
+                moveFishTo(50, 60);
+            } else {
+                wakeUp();
+            }
+        }
+
+        function wakeUp() {
+            isSleeping = false;
+            document.getElementById('fish').classList.remove('sleeping');
+        }
+
+        function tapFish() {
+            if (isSleeping) wakeUp();
+            stats.happiness = Math.min(100, stats.happiness + 10);
+            updateUI();
+            showMessage("Ruffles wiggles happily against your fingers! 💙");
+            moveFishTo(30 + Math.random() * 30, 30 + Math.random() * 30);
+        }
+
+        // Trigger Love Note
+        function triggerLoveNote() {
+            if (isSleeping) wakeUp();
+            // Reset "Missing You" level when reading a note
+            stats.missing = Math.max(0, stats.missing - 30);
+            stats.happiness = Math.min(100, stats.happiness + 20);
+            updateUI();
+
+            // Cycle through messages
+            const note = loveNotes[messageIndex];
+            messageIndex = (messageIndex + 1) % loveNotes.length;
+
+            showMessage(note);
+            moveFishTo(35, 30);
+        }
+
+        // Animate Fish Movement inside Tank
+        function moveFishTo(xPercent, yPercent) {
+            const fish = document.getElementById('fish');
+            const svg = document.getElementById('fish-svg');
+            
+            // Flip SVG direction based on horizontal movement
+            const currentLeft = parseFloat(fish.style.left) || 35;
+            if (xPercent < currentLeft) {
+                svg.style.transform = 'scaleX(-1)';
+            } else {
+                svg.style.transform = 'scaleX(1)';
+            }
+
+            fish.style.left = xPercent + '%';
+            fish.style.top = yPercent + '%';
+        }
+
+        // Background Passive Loop (Stats decay & random swim)
+        setInterval(() => {
+            if (!isSleeping) {
+                stats.hunger = Math.max(0, stats.hunger - 1.5);
+                stats.happiness = Math.max(0, stats.happiness - 1);
+                stats.energy = Math.max(0, stats.energy - 0.8);
+                stats.missing = Math.min(100, stats.missing + 1.2);
+            } else {
+                stats.energy = Math.min(100, stats.energy + 3);
+            }
+            updateUI();
+
+            // Random subtle ambient movement
+            if (!isSleeping && Math.random() > 0.6) {
+                const randomX = 15 + Math.random() * 50;
+                const randomY = 15 + Math.random() * 45;
+                moveFishTo(randomX, randomY);
+            }
+        }, 4000);
+
+        // Generate Ambient Bubbles
+        function createBubble() {
+            const container = document.getElementById('bubbles-container');
+            const bubble = document.createElement('div');
+            bubble.classList.add('bubble');
+            const size = Math.random() * 8 + 4;
+            bubble.style.width = size + 'px';
+            bubble.style.height = size + 'px';
+            bubble.style.left = (Math.random() * 90 + 5) + '%';
+            bubble.style.animationDuration = (Math.random() * 3 + 4) + 's';
+            
+            container.appendChild(bubble);
+
+            setTimeout(() => {
+                bubble.remove();
+            }, 7000);
+        }
+
+        setInterval(createBubble, 1200);
+
+        // First Load Initializer
+        updateUI();
+        setTimeout(() => {
+            showMessage("Ruffles is glad you're here! Tap 'Love Note' anytime for a message ❤️");
+        }, 800);
+    </script>
+</body>
+</html>
