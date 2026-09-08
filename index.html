@@ -356,8 +356,8 @@
                 <h1>Ruffles 🐠</h1>
                 <p>YOUR VIRTUAL BETTA COMPANION</p>
             </div>
-            <button class="audio-btn" id="audio-toggle" onclick="toggleAudio()" title="Toggle Relaxing Audio">
-                🔇
+            <button class="audio-btn" id="audio-toggle" onclick="toggleAudio()" title="Toggle Sound Effects">
+                🔕
             </button>
         </header>
 
@@ -469,7 +469,7 @@
     </div>
 
     <script>
-        // Dismiss Splash
+        // Dismiss Splash Screen
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const splash = document.getElementById('splash');
@@ -492,10 +492,9 @@
             }
         }
 
-        // Native Web Audio Synthesizer Engine
+        // Clean Web Audio Synthesizer (No background noise)
         let audioCtx = null;
-        let ambientOsc1, ambientOsc2, ambientGain;
-        let isAudioPlaying = false;
+        let sfxEnabled = false;
 
         function initAudioEngine() {
             if (!audioCtx) {
@@ -506,69 +505,43 @@
         function toggleAudio() {
             initAudioEngine();
             const btn = document.getElementById('audio-toggle');
+            sfxEnabled = !sfxEnabled;
             
-            if (!isAudioPlaying) {
+            if (sfxEnabled) {
                 audioCtx.resume();
-                startAmbientMusic();
-                isAudioPlaying = true;
-                btn.innerText = '🔊';
+                btn.innerText = '🔔';
                 btn.classList.add('active');
+                playChime(523.25); // Soft confirmation chime
             } else {
-                stopAmbientMusic();
-                isAudioPlaying = false;
-                btn.innerText = '🔇';
+                btn.innerText = '🔕';
                 btn.classList.remove('active');
             }
         }
 
-        function startAmbientMusic() {
-            if (!audioCtx) return;
-            
-            // Soft ambient drone chords (C minor 9th / Eb major)
-            ambientOsc1 = audioCtx.createOscillator();
-            ambientOsc2 = audioCtx.createOscillator();
-            ambientGain = audioCtx.createGain();
-
-            ambientOsc1.type = 'sine';
-            ambientOsc2.type = 'triangle';
-
-            ambientOsc1.frequency.setValueAtTime(130.81, audioCtx.currentTime); // C3
-            ambientOsc2.frequency.setValueAtTime(196.00, audioCtx.currentTime); // G3
-
-            ambientGain.gain.setValueAtTime(0.01, audioCtx.currentTime);
-            ambientGain.gain.exponentialRampToValueAtTime(0.05, audioCtx.currentTime + 2);
-
-            ambientOsc1.connect(ambientGain);
-            ambientOsc2.connect(ambientGain);
-            ambientGain.connect(audioCtx.destination);
-
-            ambientOsc1.start();
-            ambientOsc2.start();
-        }
-
-        function stopAmbientMusic() {
-            if (ambientGain) {
-                ambientGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
-                setTimeout(() => {
-                    if (ambientOsc1) ambientOsc1.stop();
-                    if (ambientOsc2) ambientOsc2.stop();
-                }, 500);
-            }
-        }
-
+        // Warm, soft bell chime with low-pass filter to remove harsh noise
         function playChime(freq = 523.25, type = 'sine') {
-            if (!isAudioPlaying || !audioCtx) return;
+            if (!sfxEnabled || !audioCtx) return;
             try {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
+                const filter = audioCtx.createBiquadFilter();
+
                 osc.type = type;
                 osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.7);
-                osc.connect(gain);
+
+                // Low-pass filter to make sound smooth and warm on speakers
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(1000, audioCtx.currentTime);
+
+                gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.6);
+
+                osc.connect(filter);
+                filter.connect(gain);
                 gain.connect(audioCtx.destination);
+
                 osc.start();
-                osc.stop(audioCtx.currentTime + 0.7);
+                osc.stop(audioCtx.currentTime + 0.6);
             } catch(e) {}
         }
 
